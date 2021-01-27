@@ -26,24 +26,34 @@ namespace RunningRemoteCommands
         {
             if (lbl_location.Text == "")
             {
-                MessageBox.Show(@"can you select psexec location", @"Warning");
+                MessageBox.Show(@"Can you select psexec location?", @"Warning");
             }
             else
             {
                 if (PingHost(tb_ipAdress.Text))
                 {
-
-                    if (tb_command.Text =="")
+                    if (tb_username.Text == "" || tb_password.Text == "")
                     {
-                        MessageBox.Show(@"Command cannot be empty", @"Warning");
+                        MessageBox.Show(@"Username or password cannot be empty", @"Warning");
                     }
                     else
                     {
-                        if (bw_run.IsBusy != true)
+                        if (tb_command.Text == "")
                         {
-                            bw_run.RunWorkerAsync();
-                            btn_browse.Enabled = false;
-                            btn_run.Enabled = false;
+                            MessageBox.Show(@"Command cannot be empty", @"Warning");
+                        }
+                        else
+                        {
+                            if (bw_run.IsBusy != true)
+                            {
+                                bw_run.RunWorkerAsync();
+                                btn_browse.Enabled = false;
+                                btn_run.Enabled = false;
+                                tb_ipAdress.Enabled = false;
+                                tb_username.Enabled = false;
+                                tb_password.Enabled = false;
+                                tb_command.Enabled = false;
+                            }
                         }
                     }
                 }
@@ -57,7 +67,7 @@ namespace RunningRemoteCommands
         private void bw_run_DoWork(object sender, DoWorkEventArgs e)
         {
             BeginInvoke((MethodInvoker) delegate { });
-            RunWithPsExec(tb_ipAdress.Text, tb_command.Text, lbl_location.Text);
+            RunWithPsExec(tb_ipAdress.Text, tb_username.Text, tb_password.Text, tb_command.Text, lbl_location.Text);
         }
 
 
@@ -65,11 +75,16 @@ namespace RunningRemoteCommands
         {
             btn_browse.Enabled = true;
             btn_run.Enabled = true;
+            tb_ipAdress.Enabled = true;
+            tb_username.Enabled = true;
+            tb_password.Enabled = true;
+            tb_command.Enabled = true;
         }
 
-        public void RunWithPsExec(string ipAdress, string parameter, string psExecLocation)
+        public void RunWithPsExec(string ipAdress, string username, string password, string parameter,
+            string psExecLocation)
         {
-            var usernamePasswordForPsExec = " -u Administrator -p \"password\"";
+            var usernamePasswordForPsExec = " -u " + username + " -p " + "\"" + password + "\" ";
             var process = new Process();
             var locationForPsExec = psExecLocation;
             var runWithPsExec = @" C:\Windows\System32\cmd.exe ";
@@ -101,6 +116,11 @@ namespace RunningRemoteCommands
             }
 
             return pingable;
+        }
+
+        private void tb_command_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter) btn_run_Click(sender, e);
         }
     }
 }
