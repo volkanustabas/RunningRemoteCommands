@@ -87,5 +87,6 @@
     <Content Include="icon.ico" />
     <None Include="Resources\PsExec.exe" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
