@@ -1,8 +1,10 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Net.NetworkInformation;
 using System.Windows.Forms;
+using RunningRemoteCommands.Properties;
 
 namespace RunningRemoteCommands
 {
@@ -14,66 +16,58 @@ namespace RunningRemoteCommands
             InitializeComponent();
         }
 
-        private void btn_browse_Click(object sender, EventArgs e)
-        {
-            ofd_location.ShowDialog();
-            ofd_location.InitialDirectory = @"C:\Users\%username%\Downloads";
-            var path = ofd_location.FileName;
-            lbl_location.Text = path;
-        }
-
         private void btn_run_Click(object sender, EventArgs e)
         {
-            if (lbl_location.Text == "")
+            if (PingHost(tb_ipAdress.Text))
             {
-                MessageBox.Show(@"Can you select psexec location?", @"Warning");
-            }
-            else
-            {
-                if (PingHost(tb_ipAdress.Text))
+                if (tb_username.Text == "" || tb_password.Text == "")
                 {
-                    if (tb_username.Text == "" || tb_password.Text == "")
-                    {
-                        MessageBox.Show(@"Username or password cannot be empty", @"Warning");
-                    }
-                    else
-                    {
-                        if (tb_command.Text == "")
-                        {
-                            MessageBox.Show(@"Command cannot be empty", @"Warning");
-                        }
-                        else
-                        {
-                            if (bw_run.IsBusy != true)
-                            {
-                                bw_run.RunWorkerAsync();
-                                btn_browse.Enabled = false;
-                                btn_run.Enabled = false;
-                                tb_ipAdress.Enabled = false;
-                                tb_username.Enabled = false;
-                                tb_password.Enabled = false;
-                                tb_command.Enabled = false;
-                            }
-                        }
-                    }
+                    MessageBox.Show(@"Username or password cannot be empty", @"Warning");
                 }
                 else
                 {
-                    MessageBox.Show(@"Wrong ip adress or computer name", @"Warning");
+                    if (tb_command.Text == "")
+                    {
+                        MessageBox.Show(@"Command cannot be empty", @"Warning");
+                    }
+                    else
+                    {
+                        if (bw_run.IsBusy != true)
+                        {
+                            bw_run.RunWorkerAsync();
+                            btn_run.Enabled = false;
+                            tb_ipAdress.Enabled = false;
+                            tb_username.Enabled = false;
+                            tb_password.Enabled = false;
+                            tb_command.Enabled = false;
+                        }
+                    }
                 }
+            }
+            else
+            {
+                MessageBox.Show(@"Wrong ip adress or computer name", @"Warning");
             }
         }
 
         private void bw_run_DoWork(object sender, DoWorkEventArgs e)
         {
             BeginInvoke((MethodInvoker) delegate { });
-            RunWithPsExec(tb_ipAdress.Text, tb_username.Text, tb_password.Text, tb_command.Text, lbl_location.Text);
+
+            var exeBytes = Resources.PsExec;
+            if (File.Exists(Path.GetTempPath() + @"PsExec.exe")) File.Delete(Path.GetTempPath() + @"PsExec.exe");
+            var psExecexeToRun = Path.Combine(Path.GetTempPath(), "PsExec.exe");
+            using (var exeFile = new FileStream(psExecexeToRun, FileMode.CreateNew))
+            {
+                exeFile.Write(exeBytes, 0, exeBytes.Length);
+            }
+
+            RunWithPsExec(tb_ipAdress.Text, tb_username.Text, tb_password.Text, tb_command.Text, psExecexeToRun);
         }
 
 
         private void bw_run_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            btn_browse.Enabled = true;
             btn_run.Enabled = true;
             tb_ipAdress.Enabled = true;
             tb_username.Enabled = true;
